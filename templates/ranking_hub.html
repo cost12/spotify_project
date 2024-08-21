@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title> Home </title>
+{% endblock %}
+
+{% set screens = [{'url':'options','name':'Options'},{'url':'create_ranking','name':'Create New Ranking'}] %}
+
+{% block body %}
+<section class="header">
+    <div class="container">
+        <h1> Select a way to rank songs </h1>
+    </div>
+</section>
+
+<div class="libraries">
+    <div class="container">
+        <h3> There are {{ num_libraries }} libraries to rank </h3>
+        <table>
+            <tr>
+                <th onclick="sortTable('libraries','name')"> Name </th>
+                <th onclick="sortTable('libraries','songs')"> Songs </th>
+                <th onclick="sortTable('libraries','artists')"> Artists </th>
+                <th onclick="sortTable('libraries','albums')"> Albums </th>
+                <th onclick="sortTable('libraries','average')"> Average </th>
+            </tr>
+            {% for library in libraries %}
+                <tr>
+                    <td onclick="changeToLibrary('{{library}}')"> {{ library['name'] }} </td>
+                    <td class="table-right"> {{ library['songs'] }} </td>
+                    <td class="table-right"> {{ library['artists'] }} </td>
+                    <td class="table-right"> {{ library['albums'] }} </td>
+                    <td class="table-right"> {{ library['average'] }} </td>
+                </tr>
+            {% endfor %}
+        </table>
+    </div>
+</div>
+
+<div class="rankings">
+    <div class="container">
+        <h3> There are {{ num_rankings }} rankings currently. </h3>
+        <table>
+            <tr>
+                <th onclick="sortTable('rankings','id')"> ID </th>
+                <th onclick="sortTable('rankings','name')"> Name </th>
+                <th onclick="sortTable('rankings','library')"> Library </th>
+                <th onclick="sortTable('rankings','num_songs')"> Songs </th>
+                <th onclick="sortTable('rankings','num_comparisons')"> Comparisons </th>
+                <th onclick="sortTable('rankings','description')"> Description </th>
+            </tr>
+            {% for ranking in rankings %}
+                <tr>
+                    <td class="table-right"> {{ ranking['id'] }} </td>
+                    <td onclick="changeToRanking(`{{ranking['id']}}`)"> {{ ranking['name'] }} </td>
+                    <td> {{ ranking['library'] }} </td>
+                    <td class="table-right"> {{ ranking['num_songs'] }} </td>
+                    <td class="table-right"> {{ ranking['num_comparisons'] }} </td>
+                    <td> {{ ranking['description'] }} </td>
+                </tr>
+            {% endfor %}
+        </table>
+    </div>
+</div>
+{% endblock %}

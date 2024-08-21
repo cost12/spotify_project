@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title> Selecter </title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+{% endblock %}
+
+{% set screens = [{'url':'ranking_hub','name':'Hub'}, {'url':'ranking_results','name':'Results'}] %}
+
+{% block body %}
+<section class="header">
+    <div class="content">
+        <h1> Ranking Items from the {{ list_name }} </h1>
+    </div>
+</section>
+
+<form class="chooser" action="ranking_answer" method="post">
+    <div class="item" id="item1">
+        <div class="item-view">
+            <h2> <a href="{{song1_info['link']}}"> {{ song1_info["name"] }} </a> </h2>
+            <h3> by {{ song1_info["artist"] }} </h3>
+            <div class="low-info">
+                <div class="song-info">
+                    <audio id="song1-preview">
+                        <source src="{{song1_info['preview']}}" title="audio/mp3">
+                        Audio not supported
+                    </audio>
+                    <i class="fa fa-play" onclick="playElm('song1-preview')"></i>
+                    <i class="fa fa-pause" onclick="pauseElm('song1-preview')"></i>
+                    <p> Rank: {{ song1_info["rank"] }} <br> 
+                        Rating: {{ song1_info["rating"]|round(3) }} <br>
+                        Probability: {{ expected_outcome|round(3) }} <br>
+                        k: {{ song1_info["k value"] }} <br> 
+                        Comparisons: {{ song1_info["comparisons"] }} </p>
+                </div>
+                <img class="album-cover" src="{{song1_info['image']}}" alt="Album cover">
+            </div>
+        </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="item" id="item2">
+        <div class="item-view">
+            <h2> <a href="{{song2_info['link']}}"> {{ song2_info["name"] }} </a> </h2>
+            <h3> by {{ song2_info["artist"] }} </h3>
+            <div class="low-info">
+                <div class="song-info">
+                    <audio id="song2-preview">
+                        <source src="{{song2_info['preview']}}" title="audio/mp3">
+                        Audio not supported
+                    </audio>
+                    <i class="fa fa-play" onclick="playElm('song2-preview')"></i>
+                    <i class="fa fa-pause" onclick="pauseElm('song2-preview')"></i>
+                    <p> Rank: {{ song2_info["rank"] }} <br> 
+                        Rating: {{ song2_info["rating"]|round(3) }} <br>
+                        Probability: {{ (1-expected_outcome)|round(3) }} <br>
+                        k: {{ song2_info["k value"] }} <br> 
+                        Comparisons: {{ song2_info["comparisons"] }} </p>
+                </div>
+                <img class="album-cover" src="{{song2_info['image']}}" alt="Album cover">
+            </div>
+        </div>
+    </div>
+
+    <div class="item-buttons">
+        <button class="way-better" type="submit" name="selection" value="1" id="item1-way"> Way Better </button>
+        <button class="better" type="submit" name="selection" value="0.75" id="item1-better"> Better </button>
+        <button class="barely-better" type="submit" name="selection" value="0.6" id="item1-barely"> Barely Better </button>
+    </div>
+    <div class="center">
+        <div class="content">
+            <button class="tie" type="submit" name="selection" value="0.5" id="tie"> Tie </button>
+        </div>
+    </div>
+    <div class="item-buttons">
+        <button class="barely-better" type="submit" name="selection" value="0.4" id="item2-barely"> Barely Better </button>
+        <button class="better" type="submit" name="selection" value="0.25" id="item2-better"> Better </button>
+        <button class="way-better" type="submit" name="selection" value="0" id="item2-way"> Way Better </button>
+    </div>
+</form>
+{% endblock %}

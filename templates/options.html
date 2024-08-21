@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title> Options </title>
+{% endblock %}
+
+{% set screens = [{'url':'ranking_hub', 'name':'Ranking Hub'}, {'url':'get_playlists','name':'Choose Playlist'}] %}
+
+{% block body %}
+<p> Click <a onclick="loading()" href="/get_playlists"> here </a> to pick a base playlist to work from. </p>
+<p> Click <a href="/ranking_hub"> here </a> to go to rankings</p>
+<!-- <p> Click <a onclick="loading()" href="/load_data"> here </a> to load from the database. </p> -->
+<p> Click <a onclick="loading()" href="/load_file"> here </a> to load from a file. </p>
+<p> Click <a onclick="loading()" href="/store_file"> here </a> to load to a file. </p>
+{% endblock %}

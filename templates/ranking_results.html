@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title> Rankings </title>
+{% endblock %}
+
+{% set screens = [{'url':'ranking_hub','name':'Hub'}, {'url':'active_ranking','name':'Rank Songs'}] %}
+
+{% block body %}
+<section class="header">
+    <div class="container">
+        <h1> Showing Results For {{ ranking_name }} </h1>
+        <h5> {{ ranking_desc }} </h5>
+    </div>
+</section>
+
+<section class="songs">
+    <table>
+        <tr>
+            <th> Rank </th>
+            {% for header in headers %}
+                <th> {{ header }} </th>
+            {% endfor %}
+            <th> Actions </th>
+        </tr>
+        {% for item in items %}
+            <tr>
+                <td class="table-right"> {{ loop.index }} </td>
+                {% for header in headers %}
+                    <td> {{ item[header] }} </td>
+                {% endfor %}
+                <td> <button onclick="changeRating(`{{item['id']}}`,1)" class="increase" name="increase"> + </button> <button onclick="changeRating(`{{item['id']}}`,-1)" class="decrease" name="decrease"> - </button> </td>
+            </tr>
+        {% endfor %}
+    </table>
+</section>
+{% endblock %}

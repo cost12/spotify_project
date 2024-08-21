@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="{{url_for('static',filename='styles/style.css')}}" rel="stylesheet"/>
+    <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <div id="loading">
+        <p> Loading... </p>
+    </div>
+    <div id="content">
+        <nav class="navbar">
+            <div class="container">
+                <div class="menu">
+                    {% for screen in screens %}
+                        <div class="menu-item">
+                            <a href={{ screen['url'] }}> {{ screen['name'] }} </a> 
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </nav>
+
+        {% block body %}{% endblock %}
+    </div>
+    <script src="{{url_for('static',filename='scripts/app.js')}}"></script>
+</body>
+</html>

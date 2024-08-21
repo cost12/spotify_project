@@ -1,0 +1,15 @@
+.env
+.venv/
+python_code/spotify_secrets.py
+
+static/images/
+static/data/
+
+instance/
+
+python_code/__pycache__/
+python_code/oauthversion/
+
+to_activate_db.txt
+
+.vscode/

@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title> Initialize </title>
+{% endblock %}
+
+{% set screens = [{'url':'ranking_hub','name':'Hub'}] %}
+
+{% block body %}
+<h1> Ranking songs from playlist {{ playlist['name'] }} </h1> <br>
+<form action="initializer" method="post">
+    <label for="list_name"> Name </label>                   <br>
+    <input type="text" id="list_name" name="list_name">     <br>
+    <label for="description"> Description </label>          <br>
+    <input type="text" id="description" name="description"> <br>
+
+    <label for="rank_type">Choose a type of ranking:</label>
+    <select name="rank_type" id="rank_type">
+        <option value="inexact">Inexact</option>
+        <!-- <option value="exact">Exact</option> -->
+    </select> <br>
+
+    <label for="seed_type">Choose a way to initialize:</label>
+    <select name="seed_type" id="seed_type" onchange="newSelection('seed_type','manual-form','manual')">
+        <option value="manual">Manual</option>
+        <option value="spotify-long-term">Spotify Long Term</option>
+        <option value="spotify-medium-term">Spotify Medium Term</option>
+        <option value="spotify-short-term">Spotify Short Term</option>
+    </select> <br>
+
+    <label for="library">Choose a library to rank from:</label>
+    <select name="library" id="library">
+        {% for library in libraries %}
+            <option value="{{library}}">{{library}}</option>
+        {% endfor %}
+    </select> <br>
+
+    <div id="manual-form">
+        <label for="attributes"> Choose how to set the initial manual rankings: </label> <br>
+        {% set options = ['acousticness','danceability','energy','instrumentalness','liveness','loudness','speechiness','tempo','valence','duration_ms'] %}
+        {% if 0 %}
+            <select name="attributes" id="attributes">
+                {% for o in options %}
+                    <option value={{ o }}> {{ o }} </option>
+                {% endfor %}
+            </select> <br>
+        {% else %}
+            <table>
+                <tr>
+                    <th> Attribute </th>
+                    <th> Weight </th>
+                </tr>
+                {% for o in options %}
+                    <tr>
+                        <td> <label for={{o}}> {{ o }} </label> </td>
+                        <td> <input type="number" id={{o}} name={{o}} value=0> </td>
+                    </tr>
+                {% endfor %}
+            </table>
+        {% endif %}
+    </div>
+    
+    <input type="submit" value="submit" onclick="loading()">
+</form>
+{% endblock %}

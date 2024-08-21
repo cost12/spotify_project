@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title> Playlists </title>
+{% endblock %}
+
+{% set screens = [{'url':'options','name':'Options'}] %}
+
+{% block body %}
+<form action="get_songs" method="post">
+    <input type="submit" name="submit" onclick="loading()">
+    <table>
+        <tr>
+            <th> Playlist </th>
+            <th> Owner </th>
+            <th> Select </th>
+        </tr>
+        {% set i = 0 %}
+        {% for playlist in playlists %}
+            <tr>
+                <td> <a href={{ playlist['external_urls']['spotify'] }}> {{ playlist['name'] }} </a> </td>
+                <td> <a href={{ playlist['owner']['external_urls']['spotify'] }} > {{ playlist['owner']['display_name'] }} </a> </td>
+                <td> <input type="radio" name="playlist" value={{ playlist['id'] }}> </td>
+            </tr>
+            {% set i = i + 1 %}
+        {% endfor %}
+    </table>
+    <input type="submit" name="submit" onclick="loading()">
+</form>
+{% endblock %}

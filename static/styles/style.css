@@ -1,0 +1,208 @@
+/* variables */
+:root {
+    --primary-color: #a0a00a;
+    --background-color: #fffff0;
+    --hover-color: #f06020;
+
+    --text-color: #000;
+    --highlight-color: #00a;
+
+    --sm-pad: 10px;
+    --med-pad: 25px;
+    --lg-pad: 50px;
+}
+
+/* general */
+button {
+    background-color: var(--background-color);
+}
+
+body, html {
+    margin: 0;
+    font-family: sans-serif;
+    background-color: var(--background-color);
+}
+
+#loading {
+    display: none;
+}
+
+.content {
+    margin: 0 auto;
+    width: 70%;
+}
+
+td {
+    border: solid;
+}
+
+th {
+    border: solid;
+    background-color: #b558f89c;
+}
+
+.table-right {
+    text-align: right;
+}
+
+table {
+    background-color: #b558f834;
+    border-collapse: collapse;
+    width: 75%;
+}
+/*
+th {
+    height: 30px;
+}
+
+td {
+    text-align: center;
+    padding: 5px;
+}
+*/
+
+.form {
+    margin-top: 20px;
+}
+
+a {
+    text-decoration: none;
+    color: var(--text-color);
+}
+
+a:hover {
+    text-decoration: underline;
+    color: var(--highlight-color);
+}
+
+/* Menu */
+.menu {
+    list-style-type: none;
+    display: flex;
+}
+
+.menu-item {
+    padding: var(--sm-pad);
+}
+
+.menu-item:hover {
+    background-color: var(--hover-color);
+}
+
+/* Navigation bar */
+.navbar {
+    background: var(--primary-color);
+    margin: 0;
+}
+
+.navbar .container {
+    display: flex;
+}
+
+/* Active Ranking */
+.chooser {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+    grid-template-rows: 1fr auto;
+    margin: 0% 10% 0% 10%;
+}
+
+.item {
+    grid-column: span 4;
+}
+
+.item-view {
+    border-color: #b558f8;
+    background-color: #b558f834;
+    border-style: solid;
+    border-radius: 20px;
+    padding: 3%;
+    height: 86%;
+}
+
+.item-view:hover {
+    background-color: #a226fa34;
+}
+
+.low-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+
+.album-cover {
+    width: 60%;
+}
+
+.item-buttons {
+    grid-column: span 4;
+}
+
+.barely-better {
+    border: 2px solid orange;
+    border-radius: 8px;
+    width: 25%;
+    padding-top: 30px;
+    padding-bottom: 30px;
+    margin: 0;
+}
+
+.barely-better:hover {
+    background-color: #fdc62082;
+}
+
+.better {
+    border: 2px solid green;
+    border-radius: 8px;
+    width: 48%;
+    padding-top: 30px;
+    padding-bottom: 30px;
+    margin: 0;
+}
+
+.better:hover {
+    background-color: lightgreen;
+}
+
+.way-better {
+    border: 2px solid blue;
+    border-radius: 8px;
+    width: 25%;
+    padding-top: 30px;
+    padding-bottom: 30px;
+    margin: 0;
+}
+
+.way-better:hover {
+    background-color: lightblue;
+}
+
+.tie {
+    border: 2px solid red;
+    border-radius: 8px;
+    margin: 0px;
+    width: 100%;
+    padding: 30px 0px 30px 0px;
+}
+
+.tie:hover {
+    background-color: pink;
+}
+
+/* Ranking Results */
+.increase {
+    border: 2px solid green;
+    border-radius: 8px;
+}
+
+.increase:hover {
+    background-color: lightgreen;
+}
+
+.decrease {
+    border: 2px solid red;
+    border-radius: 8px;
+}
+
+.decrease:hover {
+    background-color: pink;
+}

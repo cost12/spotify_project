@@ -54,22 +54,22 @@ def table_to_html(data:pd.DataFrame, class_name:str, column_alignments:dict[str,
             with tags.tr():
                 for i,header in enumerate(data.columns):
                     if header in header_functions:
-                        if header in column_alignments:
-                            tags.th(header, _class=column_alignments[header], onclick=header_functions[header])
-                        else:
-                            tags.th(header, onclick=header_functions[header])
+                        tags.th(header, onclick=header_functions[header])
                     else:
-                        if header in column_alignments:
-                            tags.th(header, _class=column_alignments[header])
-                        else:
-                            tags.th(header)
+                        tags.th(header)
             for index,row in data.iterrows():
                 with tags.tr():
                     for datum,header in zip(row,data.columns):
                         if header in column_functions:
-                            tags.td(datum, on_click=column_functions[header](datum))
+                            if header in column_alignments:
+                                tags.td(datum, _class=column_alignments[header], onclick=column_functions[header](datum))
+                            else:
+                                tags.td(datum, onclick=column_functions[header](datum))
                         else:
-                            tags.td(datum)
+                            if header in column_alignments:
+                                tags.td(datum, _class=column_alignments[header])
+                            else:
+                                tags.td(datum)
     return table
 
 

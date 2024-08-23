@@ -12,7 +12,7 @@ class Table:
     def __init__(self,
                  name:str,
                  headers:list[str],
-                 data_functions:dict[str,Callable[[Any],str]],*,
+                 data_function:Callable[[list[Any]],list[str]],*,
                  column_alignments:dict[str,str]|None=None,
                  header_functions:dict[str,str]|None=None,
                  column_functions:list[Callable[[str],str]]|None=None,
@@ -20,7 +20,7 @@ class Table:
                  initial_sort:str|None=None,reverse=False):
         self.name = name
         self.headers = headers
-        self.data_functions = data_functions
+        self.data_function = data_function
         self.column_alignments = column_alignments if column_alignments is not None else dict[str,str]()
         self.header_functions =  header_functions  if header_functions  is not None else dict[str,str]()
         self.column_functions =  column_functions  if column_functions  is not None else list[Callable[[str],str]]()
@@ -33,10 +33,12 @@ class Table:
             self.reverse = not self.reverse
         self.sort_column = sort
 
-    def to_html(self, data_source) -> tags.div:
-        data = {}
+    def to_html(self, data_source:list[Any]) -> tags.div:
+        #data = {}
+        data = []
         for i,header in enumerate(self.headers):
-            data[header] = self.data_functions[header](data_source)
+            #data[header] = self.data_functions[header](data_source)
+            data.append(self.data_function(data_source))
         df = pd.DataFrame(data, columns=self.headers)
         df = df.sort_values(by=self.sort_column, axis=0, key=lambda x: self.sort_functions.get(self.sort_column,identity)(x), ascending=self.reverse)
         return table_to_html(df, self.name, column_alignments=self.column_alignments, header_functions=self.header_functions, column_functions=self.column_functions)

@@ -4,27 +4,28 @@ import dominate.tags as tags
 from typing import Any, Callable
 import pandas as pd
 
+def identity(x):
+    return x
+
 class Table:
 
-    def __init__(self, 
-                 name:str, 
-                 headers:list[str], 
-                 column_alignments:dict[str,str], 
-                 header_functions:dict[str,str], 
-                 column_functions:list[Callable[[str],str]], 
-                 sorts:dict[str,Callable[[Any],float]], 
-                 data_funcs:dict[str,Callable[[Any],str]],*,initial_sort:str|None=None,reverse=False):
+    def __init__(self,
+                 name:str,
+                 headers:list[str],
+                 data_functions:dict[str,Callable[[Any],str]],*,
+                 column_alignments:dict[str,str]|None=None,
+                 header_functions:dict[str,str]|None=None,
+                 column_functions:list[Callable[[str],str]]|None=None,
+                 sort_functions:dict[str,Callable[[Any],float]]|None=None,
+                 initial_sort:str|None=None,reverse=False):
         self.name = name
         self.headers = headers
-        self.column_align = column_alignments
-        self.header_functions = header_functions
-        self.column_functions = column_functions
-        self.sort_functions = sorts
-        self.data_functions = data_funcs
-        if initial_sort is not None:
-            self.sort_column = initial_sort
-        else:
-            self.sort_column = headers[0]
+        self.data_functions = data_functions
+        self.column_alignments = column_alignments if column_alignments is not None else dict[str,str]()
+        self.header_functions =  header_functions  if header_functions  is not None else dict[str,str]()
+        self.column_functions =  column_functions  if column_functions  is not None else list[Callable[[str],str]]()
+        self.sort_functions =    sort_functions    if sort_functions    is not None else dict[str,Callable[[Any],float]]()
+        self.sort_column =       initial_sort      if initial_sort      is not None else headers[0]
         self.reverse = reverse
 
     def set_sort(self, sort:str) -> None:
@@ -37,10 +38,10 @@ class Table:
         for i,header in enumerate(self.headers):
             data[header] = self.data_functions[header](data_source)
         df = pd.DataFrame(data, columns=self.headers)
-        df = df.sort_values(by=self.sort_column, axis=0, key=lambda x: self.sort_functions[self.sort_column](x), ascending=self.reverse)
-        return table_to_html(df, self.name, self.column_align, self.header_functions, self.column_functions)
+        df = df.sort_values(by=self.sort_column, axis=0, key=lambda x: self.sort_functions.get(self.sort_column,identity)(x), ascending=self.reverse)
+        return table_to_html(df, self.name, column_alignments=self.column_alignments, header_functions=self.header_functions, column_functions=self.column_functions)
 
-def table_to_html(data:pd.DataFrame, class_name:str, column_alignments:dict[str,str]|None=None, header_functions:dict[str,str]|None=None, column_functions:dict[str,Callable[[Any],str]]|None=None) -> tags.div:
+def table_to_html(data:pd.DataFrame, class_name:str,*, column_alignments:dict[str,str]|None=None, header_functions:dict[str,str]|None=None, column_functions:dict[str,Callable[[Any],str]]|None=None) -> tags.div:
     if column_alignments is None:
         column_alignments = {}
     if header_functions is None:
@@ -87,11 +88,11 @@ def test():
     data = TestData()
     table = Table('test',
                   ['one','two','three'],
-                  {'two':'right-align','three':'right-align'},
-                  {'one':"sortTable('one')",'two':"sortTable('two')",'three':"sortTable('three')"},
-                  {'one':lambda x: f'sendTo("{x}")'},
-                  {'one':lambda x:x,'two':lambda x:x.lower(),'three':lambda x:(x-3)**2},
-                  {'one':lambda x: x.nums(), 'two':lambda x: x.chars(), 'three':lambda x: x.nums2()})
+                  {'one':lambda x: x.nums(), 'two':lambda x: x.chars(), 'three':lambda x: x.nums2()},
+                  column_alignments={'two':'right-align','three':'right-align'},
+                  header_functions={'one':"sortTable('one')",'two':"sortTable('two')",'three':"sortTable('three')"},
+                  column_functions={'one':lambda x: f'sendTo("{x}")'},
+                  sort_functions={'one':lambda x:x,'two':lambda x:x.lower(),'three':lambda x:(x-3)**2})
     html = table.to_html(data)
     print(html.render())
 

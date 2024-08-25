@@ -55,6 +55,24 @@ def ms_to_str(ms:int) -> str:
     answer += f'{seconds:02d}.{ms:03d}'
     return answer
 
+def str_to_ms(string:str) -> int:
+    """
+    hh:mm:ss.mmm
+    """
+    total = 0
+    while ':' in string:
+        current = int(string[0:string.index(':')])
+        string = string[string.index(':')+1:]
+        total *= 60
+        total += current
+    current = int(string[0:string.index('.')])
+    string = string[string.index('.')+1:]
+    total *= 60
+    total += current
+    total *= 1000
+    total += int(string)
+    return total
+
 class BinaryNode:
 
     def __init__(self, count=None, val=None, left=None, right=None):

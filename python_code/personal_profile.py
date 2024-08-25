@@ -45,6 +45,7 @@ class Profile:
         if isinstance(ranking, rankings.InexactRanking):
             ranking.adjust_rating(item, amount)
 
+    """
     def get_ranking_items(self, rank_id:str) -> list[dict]:
         items = []
         for i,item in enumerate(self.rankings[rank_id].get_items()):
@@ -56,6 +57,9 @@ class Profile:
             items[i]['Score'] = str(round(self.rankings[rank_id].get_rating(item),3))
         items.sort(key=lambda item:float(item['Score']),reverse=True)
         return items
+    """
+    def get_ranking_items(self, rank_id:str) -> list:
+        return list(self.rankings[rank_id].get_items())
     
     def get_ranking(self, rank_id:str) -> rankings.Ranking:
         return self.rankings[rank_id]

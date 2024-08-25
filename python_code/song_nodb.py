@@ -52,7 +52,13 @@ class Song(RankItem):
         self.artists = artists
 
     def __repr__(self):
-        return f'Song: {self.name}'
+        return f'Song: {self.name} at {hex(id(self))}'
+    
+    def __eq__(self, other:object) -> bool:
+        return isinstance(other,Song) and other.id == self.id
+    
+    def __hash__(self) -> int:
+        return hash(self.id)
     
     def get_album(self):
         return self.albums[0]

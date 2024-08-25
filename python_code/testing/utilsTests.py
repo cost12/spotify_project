@@ -6,7 +6,7 @@ currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfram
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir) 
 
-from utils import Scheduler, subsrting_from_to, adjust_range, ms_to_str
+from utils import Scheduler, subsrting_from_to, adjust_range, ms_to_str, str_to_ms
 
 def test_get(sched:Scheduler, count:int, expected:float):
     actual = sched.get_val(count)
@@ -54,11 +54,19 @@ def test_ms_to_str():
     test_ms(305001,'5:05.001')
     test_ms(7200000,'2:00:00.000')
 
+def test_str_to_ms():
+    assert str_to_ms(ms_to_str(10))     == 10
+    assert str_to_ms(ms_to_str(5325))   == 5325
+    assert str_to_ms(ms_to_str(48729))  == 48729
+    assert str_to_ms(ms_to_str(579237)) == 579237
+    assert str_to_ms(ms_to_str(4892))   == 4892
+
 def test():
     test_sched()
     test_substr()
     test_adjust_range()
     test_ms_to_str()
+    test_str_to_ms()
 
 if __name__=="__main__":
     test()

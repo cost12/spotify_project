@@ -4,7 +4,7 @@
 <title> Home </title>
 {% endblock %}
 
-{% set screens = [{'url':'options','name':'Options'},{'url':'create_ranking','name':'Create New Ranking'}] %}
+{% set screens = [{'url':url_for('options',user_id=user_id),'name':'Options'},{'url':url_for('create_ranking',user_id=user_id),'name':'Create New Ranking'}] %}
 
 {% block body %}
 <section class="header">
@@ -52,7 +52,7 @@
             {% for ranking in rankings %}
                 <tr>
                     <td class="table-right"> {{ ranking['id'] }} </td>
-                    <td onclick="changeToRanking(`{{ranking['id']}}`)"> {{ ranking['name'] }} </td>
+                    <td onclick="changeToRanking(`{{user_id}}`,`{{ranking['id']}}`)"> {{ ranking['name'] }} </td>
                     <td> {{ ranking['library'] }} </td>
                     <td class="table-right"> {{ ranking['num_songs'] }} </td>
                     <td class="table-right"> {{ ranking['num_comparisons'] }} </td>

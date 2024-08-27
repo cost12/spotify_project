@@ -4,10 +4,10 @@
 <title> Playlists </title>
 {% endblock %}
 
-{% set screens = [{'url':'options','name':'Options'}] %}
+{% set screens = [{'url':url_for('options',user_id=user_id),'name':'Options'}] %}
 
 {% block body %}
-<form action="get_songs" method="post">
+<form action="/get_songs/{{user_id}}" method="post">
     <input type="submit" name="submit" onclick="loading()">
     <table>
         <tr>

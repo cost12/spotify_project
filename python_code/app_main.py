@@ -30,79 +30,81 @@ def spotify_login():
 @app.route("/callback")
 def callback():
     control.spotify_access_token(flask.request.args['code'])
-    return flask.redirect(flask.url_for('options'))
+    info = control.sp.current_user()
+    control.create_profile(info['id'],info['display_name'])
+    return flask.redirect(flask.url_for('options',user_id=info['id']))
 
-@app.route("/options", methods=['GET','POST'])
-def options():
+@app.route("/options/<user_id>", methods=['GET','POST'])
+def options(user_id:str):
     valid, url = control.validate_session()
     if not valid:
         return flask.redirect(url)
-    return flask.render_template('options.html')
+    return flask.render_template('options.html', user_id=user_id)
 
-@app.route('/load_data')
-def load_data():
-    valid, url = control.validate_session()
-    if not valid:
-        return flask.redirect(url)
-    
-    control.load_from_db()
-    return flask.redirect('ranking_hub')
-
-@app.route('/load_file')
-def load_file():
+@app.route('/load_data/<user_id>')
+def load_data(user_id:str):
     valid, url = control.validate_session()
     if not valid:
         return flask.redirect(url)
     
-    control.load_from_file()
-    return flask.redirect('ranking_hub')
+    control.load_from_db(user_id)
+    return flask.redirect(flask.url_for('ranking_hub',user_id=user_id))
 
-@app.route('/store_file')
-def store_file():
+@app.route('/load_file/<user_id>')
+def load_file(user_id:str):
     valid, url = control.validate_session()
     if not valid:
         return flask.redirect(url)
     
-    control.load_to_file()
-    return flask.redirect('ranking_hub')
+    control.load_from_file(user_id)
+    return flask.redirect(flask.url_for('ranking_hub',user_id=user_id))
 
-@app.route('/get_playlists')
-def get_playlists():
+@app.route('/store_file/<user_id>')
+def store_file(user_id:str):
     valid, url = control.validate_session()
     if not valid:
         return flask.redirect(url)
     
-    playlists = control.get_playlists()
+    control.load_to_file(user_id)
+    return flask.redirect(flask.url_for('ranking_hub',user_id=user_id))
 
-    return flask.render_template('get_playlists.html',playlists=playlists)
+@app.route('/get_playlists/<user_id>')
+def get_playlists(user_id:str):
+    valid, url = control.validate_session()
+    if not valid:
+        return flask.redirect(url)
+    
+    playlists = control.get_playlists(user_id)
 
-@app.route('/get_songs', methods=['GET','POST'])
-def get_songs():
+    return flask.render_template('get_playlists.html',playlists=playlists,user_id=user_id)
+
+@app.route('/get_songs/<user_id>', methods=['GET','POST'])
+def get_songs(user_id):
     valid, url = control.validate_session()
     if not valid:
         return flask.redirect(url)
     
     if 'playlist' in flask.request.form:
         playlist_id = flask.request.form['playlist']
-        control.add_playlist_from_spotify(playlist_id)
-        return flask.redirect('ranking_hub')
+        control.add_playlist_from_spotify(user_id, playlist_id)
+        return flask.redirect(flask.url_for('ranking_hub',user_id=user_id))
     else:
-        return flask.redirect('get_playlists')
+        return flask.redirect(flask.url_for('get_playlists',user_id=user_id))
 
-@app.route('/create_ranking')
-def create_ranking():
+@app.route('/create_ranking/<user_id>')
+def create_ranking(user_id:str):
     valid, url = control.validate_session()
     if not valid:
         return flask.redirect(url)
     
-    if control.can_create_ranking():
-        libraries = control.get_library_names()
-        return flask.render_template('create_ranking.html',playlist={}, libraries=libraries)
+    if control.can_create_ranking(user_id):
+        libraries = control.get_library_names(user_id)
+        return flask.render_template('create_ranking.html', user_id=user_id, playlist={}, libraries=libraries)
     else:
-        return flask.redirect('ranking_hub')
+        return flask.redirect(flask.url_for('ranking_hub', user_id=user_id))
 
-@app.route('/initializer',methods=['GET','POST'])
-def initializer():
+@app.route('/initializer/<user_id>',methods=['GET','POST'])
+def initializer(user_id:str):
     valid, url = control.validate_session()
     if not valid:
         return flask.redirect(url)
@@ -113,39 +115,39 @@ def initializer():
     desc = flask.request.form.get('description',f'list of {name}')
     library = flask.request.form['library']
     props = {property:float(flask.request.form[property]) for property in song_db.SONG_PROPERTIES}
-    ranking = control.initialize_ranking(ranking_type, seed_type, library, name, desc, props)
-    control.set_current_ranking(ranking.id)
-    return flask.redirect('ranking_results')
+    ranking = control.initialize_ranking(user_id, ranking_type, seed_type, library, name, desc, props)
+    return flask.redirect(flask.url_for('ranking_results', user_id=user_id, ranking_id=ranking.id))
 
-@app.route('/active_ranking', methods=["GET","POST"])
-def selecter():
+@app.route('/active_ranking/<user_id>/<ranking_id>', methods=["GET","POST"])
+def active_ranking0(user_id:str, ranking_id:str):
     valid, url = control.validate_session()
     if not valid:
         return flask.redirect(url)
     
-    list_name = control.get_ranking_name()
-    song1_info, song2_info, expected_outcome = control.get_info_2items()
-    return flask.render_template('active_ranking.html',list_name=list_name, song1_info=song1_info, song2_info=song2_info, expected_outcome=expected_outcome)
+    item1, item2 = control.get_two_items(user_id,ranking_id)
+    return flask.redirect(flask.url_for('active_ranking1',user_id=user_id,ranking_id=ranking_id,item1_id=item1.id,item2_id=item2.id))
 
-@app.route('/ranking_answer', methods=["GET","POST"])
-def answer():
+@app.route('/active_ranking/<user_id>/<ranking_id>/<item1_id>/<item2_id>', methods=["GET","POST"])
+def active_ranking1(user_id:str, ranking_id:str, item1_id:str, item2_id:str):
+    valid, url = control.validate_session()
+    if not valid:
+        return flask.redirect(url)
+    
+    list_name = control.get_ranking_name(user_id, ranking_id)
+    item1_info = control.get_item_info(user_id, ranking_id, control.id_to_item(item1_id))
+    item2_info = control.get_item_info(user_id, ranking_id, control.id_to_item(item2_id))
+    expected_outcome = control.get_expected_outcome(user_id, ranking_id, item1_id,item2_id)
+    return flask.render_template('active_ranking.html',user_id=user_id,ranking_id=ranking_id,list_name=list_name, item1_info=item1_info, item2_info=item2_info, expected_outcome=expected_outcome)
+
+@app.route('/ranking_answer/<user_id>/<ranking_id>/<item1_id>/<item2_id>', methods=["GET","POST"])
+def ranking_answer(user_id:str, ranking_id:str, item1_id:str, item2_id:str):
     valid, url = control.validate_session()
     if not valid:
         return flask.redirect(url)
     
     result = float(flask.request.form.get('selection'))
-    control.add_rank_result(result)
-    return flask.redirect('active_ranking')
-    
-@app.route('/change_ranking', methods=['GET','POST'])
-def change_ranking():
-    valid, url = control.validate_session()
-    if not valid:
-        return flask.redirect(url)
-    
-    data = flask.request.get_json()
-    control.set_current_ranking(data['id'])
-    return flask.redirect('ranking_results')
+    control.add_rank_result(user_id, ranking_id, item1_id, item2_id, result)
+    return flask.redirect(flask.url_for('active_ranking0',user_id=user_id,ranking_id=ranking_id))
 
 @app.route('/update_ranking', methods=['GET','POST'])
 def update_ranking():
@@ -154,33 +156,30 @@ def update_ranking():
         return flask.redirect(url)
     
     data = flask.request.get_json()
-    control.add_song_result(data['id'],data['amount'])
-    return flask.redirect('ranking_results')
+    control.add_item_result(data['user_id'], data['ranking_id'], data['id'], data['amount'])
+    return flask.redirect(flask.url_for('ranking_results',user_id=data['user_id'], ranking_id=data['ranking_id']))
 
-@app.route('/ranking_results', methods=['GET','POST'])
-def rankings():
+@app.route('/ranking_results/<user_id>/<ranking_id>', methods=['GET','POST'])
+def ranking_results(user_id:str, ranking_id:str):
     valid, url = control.validate_session()
     if not valid:
         return flask.redirect(url)
     
-    if flask.request.method == 'POST':
-        control.set_current_ranking(flask.request.form.get('ranking'))
-    
-    headers = control.user.get_headers()
-    items = control.get_ranking_items()
-    ranking_name = control.get_ranking_name()
-    ranking_desc = control.get_ranking_desc()
-    return flask.render_template('ranking_results.html', headers=headers, items=items, ranking_name=ranking_name, ranking_desc=ranking_desc)
+    headers = control.users[user_id].get_headers()
+    items = control.get_ranking_items(user_id, ranking_id)
+    ranking_name = control.get_ranking_name(user_id,ranking_id)
+    ranking_desc = control.get_ranking_desc(user_id,ranking_id)
+    return flask.render_template('ranking_results.html', user_id=user_id, ranking_id=ranking_id, headers=headers, items=items, ranking_name=ranking_name, ranking_desc=ranking_desc)
 
-@app.route('/ranking_hub')
-def rank_hub():
+@app.route('/ranking_hub/<user_id>')
+def ranking_hub(user_id:str):
     valid, url = control.validate_session()
     if not valid:
         return flask.redirect(url)
     
-    rankings = control.get_rankings_info()
-    libraries = control.get_libraries_info()
-    return flask.render_template('ranking_hub.html',num_libraries=len(libraries),libraries=libraries,rankings=rankings,num_rankings=len(rankings))
+    rankings = control.get_rankings_info(user_id)
+    libraries = control.get_libraries_info(user_id)
+    return flask.render_template('ranking_hub.html',user_id=user_id,num_libraries=len(libraries),libraries=libraries,rankings=rankings,num_rankings=len(rankings))
 
 @app.route('/update_table_sort', methods=['GET','POST'])
 def table_sort():

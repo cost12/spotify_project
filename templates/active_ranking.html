@@ -5,7 +5,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 {% endblock %}
 
-{% set screens = [{'url':'ranking_hub','name':'Hub'}, {'url':'ranking_results','name':'Results'}] %}
+{% set screens = [{'url':url_for('ranking_hub',user_id=user_id),'name':'Hub'}, {'url':url_for('ranking_results',user_id=user_id,ranking_id=ranking_id),'name':'Results'}] %}
 
 {% block body %}
 <section class="header">
@@ -14,26 +14,26 @@
     </div>
 </section>
 
-<form class="chooser" action="ranking_answer" method="post">
+<form class="chooser" action="/ranking_answer/{{user_id}}/{{ranking_id}}/{{item1_info['id']}}/{{item2_info['id']}}" method="post">
     <div class="item" id="item1">
         <div class="item-view">
-            <h2> <a href="{{song1_info['link']}}"> {{ song1_info["name"] }} </a> </h2>
-            <h3> by {{ song1_info["artist"] }} </h3>
+            <h2> <a href="{{item1_info['link']}}"> {{ item1_info["name"] }} </a> </h2>
+            <h3> by {{ item1_info["artist"] }} </h3>
             <div class="low-info">
                 <div class="song-info">
                     <audio id="song1-preview">
-                        <source src="{{song1_info['preview']}}" title="audio/mp3">
+                        <source src="{{item1_info['preview']}}" title="audio/mp3">
                         Audio not supported
                     </audio>
                     <i class="fa fa-play" onclick="playElm('song1-preview')"></i>
                     <i class="fa fa-pause" onclick="pauseElm('song1-preview')"></i>
-                    <p> Rank: {{ song1_info["rank"] }} <br> 
-                        Rating: {{ song1_info["rating"]|round(3) }} <br>
+                    <p> Rank: {{ item1_info["rank"] }} <br> 
+                        Rating: {{ item1_info["rating"]|round(3) }} <br>
                         Probability: {{ expected_outcome|round(3) }} <br>
-                        k: {{ song1_info["k value"] }} <br> 
-                        Comparisons: {{ song1_info["comparisons"] }} </p>
+                        k: {{ item1_info["k value"] }} <br> 
+                        Comparisons: {{ item1_info["comparisons"] }} </p>
                 </div>
-                <img class="album-cover" src="{{song1_info['image']}}" alt="Album cover">
+                <img class="album-cover" src="{{item1_info['image']}}" alt="Album cover">
             </div>
         </div>
     </div>
@@ -42,23 +42,23 @@
 
     <div class="item" id="item2">
         <div class="item-view">
-            <h2> <a href="{{song2_info['link']}}"> {{ song2_info["name"] }} </a> </h2>
-            <h3> by {{ song2_info["artist"] }} </h3>
+            <h2> <a href="{{item2_info['link']}}"> {{ item2_info["name"] }} </a> </h2>
+            <h3> by {{ item2_info["artist"] }} </h3>
             <div class="low-info">
                 <div class="song-info">
                     <audio id="song2-preview">
-                        <source src="{{song2_info['preview']}}" title="audio/mp3">
+                        <source src="{{item2_info['preview']}}" title="audio/mp3">
                         Audio not supported
                     </audio>
                     <i class="fa fa-play" onclick="playElm('song2-preview')"></i>
                     <i class="fa fa-pause" onclick="pauseElm('song2-preview')"></i>
-                    <p> Rank: {{ song2_info["rank"] }} <br> 
-                        Rating: {{ song2_info["rating"]|round(3) }} <br>
+                    <p> Rank: {{ item2_info["rank"] }} <br> 
+                        Rating: {{ item2_info["rating"]|round(3) }} <br>
                         Probability: {{ (1-expected_outcome)|round(3) }} <br>
-                        k: {{ song2_info["k value"] }} <br> 
-                        Comparisons: {{ song2_info["comparisons"] }} </p>
+                        k: {{ item2_info["k value"] }} <br> 
+                        Comparisons: {{ item2_info["comparisons"] }} </p>
                 </div>
-                <img class="album-cover" src="{{song2_info['image']}}" alt="Album cover">
+                <img class="album-cover" src="{{item2_info['image']}}" alt="Album cover">
             </div>
         </div>
     </div>

@@ -18,13 +18,15 @@ class Control:
 
     def __init__(self, flask_session):
         self.__spotipy_connect(flask_session)
-        self.current_user_name = "none" #self.sp.current_user()['display_name']
-        self.user = personal_profile.Profile(self.current_user_name)
+        self.users = dict[str,personal_profile.Profile]()
         self.song_tracker = song_db.SongTracker()
-        self.current_ranking = None
         self.current_items = []
         self.table_sorts = {'libraries':'name','rankings':'id','ranking':'rating'}
         self.sort_direction = False
+
+    def create_profile(self, user_id:str, user_name:str) -> None:
+        if user_id not in self.users:
+            self.users[user_id] = personal_profile.Profile(user_name, user_id)
 
     """
     Interactions with spotify/spotipy
@@ -39,7 +41,6 @@ class Control:
         return self.sp_oauth.get_access_token(code)
 
     def __spotipy_connect(self, flask_session):
-        #os.environ.get('CLIENT_SECRET')
         CLIENT_SECRET = spotify_secrets.CLIENT_SECRET
         CLIENT_ID =     spotify_secrets.CLIENT_ID
         REDIRECT_URI = 'http://localhost:5000/callback'
@@ -57,9 +58,8 @@ class Control:
 
         self.sp = spotipy.Spotify(auth_manager=self.sp_oauth)
 
-    def get_playlists(self) -> list[dict]:
-        playlists_info = self.sp.current_user_playlists()
-        #total_playlists = playlists_info['total']
+    def get_playlists(self, user_id) -> list[dict]:
+        playlists_info = self.sp.user_playlists(user_id)
         playlists = playlists_info['items']
 
         while playlists_info['next']:
@@ -67,10 +67,10 @@ class Control:
             playlists.extend(playlists_info['items'])
         return playlists
 
-    def add_playlist_from_spotify(self, playlist_id:str) -> None:
+    def add_playlist_from_spotify(self, user_id:str, playlist_id:str) -> None:
         playlist_name = self.sp.playlist(playlist_id,"name")['name']
         lib = self.playlist_to_library(playlist_id, playlist_name)
-        self.user.add_library(lib)
+        self.users[user_id].add_library(lib)
 
     def playlist_to_library(self, playlist_id:str, playlist_name:str) -> song_collections.Library:
         library = song_collections.Library(playlist_name,playlist_id)
@@ -97,14 +97,11 @@ class Control:
     Access ranking information
     """
 
-    def can_create_ranking(self):
-        return self.user.get_num_libraries() > 0
+    def can_create_ranking(self, user_id:str) -> bool:
+        return self.users[user_id].get_num_libraries() > 0
 
-    def set_current_ranking(self, rank_id:str):
-        self.current_ranking = rank_id
-
-    def create_spotify_ranking(self, term:str, library:song_collections.Library):
-        if self.user.has_spotify_ranking(term):
+    def create_spotify_ranking(self, user_id:str, term:str, library:song_collections.Library):
+        if self.users[user_id].has_spotify_ranking(term):
             i = 0
             user_ranking = list[song_db.Song]()
             spotify_ranking = self.user.get_spotify_ranking(term)
@@ -116,11 +113,11 @@ class Control:
             if len(user_ranking) >= library.size():
                 return user_ranking
             else:
-                return self.__extend_spotify_ranking(term, library, user_ranking, len(spotify_ranking))
+                return self.__extend_spotify_ranking(user_id, term, library, user_ranking, len(spotify_ranking))
         else:
-            return self.__extend_spotify_ranking(term,library,[])
+            return self.__extend_spotify_ranking(user_id, term,library,[])
         
-    def __extend_spotify_ranking(self, term:str, library:song_collections.Library, user_ranking:list[song_db.Song], offset:int=0) -> list[song_db.Song]:
+    def __extend_spotify_ranking(self, user_id:str, term:str, library:song_collections.Library, user_ranking:list[song_db.Song], offset:int=0) -> list[song_db.Song]:
         song_info = self.sp.current_user_top_tracks(limit=20,offset=offset,time_range=term)
         more_info = self.sp.audio_features([item['id'] for item in song_info['items']])
         spotify_ranking = list[song_db.Song]()
@@ -142,70 +139,64 @@ class Control:
                 more_info = self.sp.audio_features([item['id'] for item in song_info['items']])
             else:
                 song_info = None
-        self.user.extend_spotify_ranking(term, spotify_ranking)
+        self.users[user_id].extend_spotify_ranking(term, spotify_ranking)
         return user_ranking
 
-    def initialize_ranking(self, ranking_type:str, seed_type:str, library:str, name:str, desc:str, properties:dict) -> rankings.Ranking:
+    def initialize_ranking(self, user_id:str, ranking_type:str, seed_type:str, library:str, name:str, desc:str, properties:dict) -> rankings.Ranking:
         if seed_type=='manual':
-            r = self.user.init_ranking(ranking_type, 'properties', library, name,desc, properties)
+            r = self.users[user_id].init_ranking(ranking_type, 'properties', library, name,desc, properties)
             return r
         elif seed_type in ['spotify-long-term','spotify-medium-term','spotify-short-term']:
             term = utils.subsrting_from_to(seed_type,'-','-')
-            order = self.create_spotify_ranking(f"{term}_term",self.user.get_library(library))
-            r = self.user.init_ranking(ranking_type,'order',library,name,desc,order)
+            order = self.create_spotify_ranking(user_id, f"{term}_term",self.users[user_id].get_library(library))
+            r = self.users[user_id].init_ranking(ranking_type,'order',library,name,desc,order)
             return r
         else:
             print(seed_type)
             raise NotImplemented
         
-    def get_info_2items(self) -> tuple[dict[str,str]]:
-        items = self.user.get_two_items(self.current_ranking)
-        self.current_items = items
-        return self.get_item_info(items[0]), self.get_item_info(items[1]), self.user.get_ranking(self.current_ranking).expected_outcome(items[0],items[1])
+    def get_two_items(self, user_id:str, ranking_id:str) -> list[rankings.RankItem]:
+        return self.users[user_id].get_two_items(ranking_id)
+    
+    def get_expected_outcome(self, user_id:str, ranking_id:str, item1_id:str, item2_id:str) -> float:
+        return self.users[user_id].get_ranking(ranking_id).expected_outcome(self.id_to_item(item1_id),self.id_to_item(item2_id))
 
-    def get_item_info(self, item) -> dict[str,str]:
+    def get_item_info(self, user_id:str, ranking_id:str, item:rankings.RankItem) -> dict[str,str]:
         item_info = {
             "name":   item.name,
+            'id':     item.id,
             'link':   item.link,
             'image': item.get_album().get_image(),
             'preview':item.preview_url,
             "artist": item.artist_str(),
-            "rank":   self.get_item_rank(item),
-            "rating": self.get_item_rating(item),
-            "k value": self.get_item_kvalue(item),
-            "comparisons": self.get_item_comparisons(item)
+            "rank":   self.get_item_rank(user_id, ranking_id, item),
+            "rating": self.get_item_rating(user_id, ranking_id, item),
+            "k value": self.get_item_kvalue(user_id, ranking_id, item),
+            "comparisons": self.get_item_comparisons(user_id, ranking_id, item)
         }
         return item_info
     
-    def get_ranking_items(self) -> list[dict]:
-        return self.user.get_ranking_items(self.current_ranking)
+    def get_ranking_items(self, user_id:str, ranking_id:str) -> list[dict]:
+        return self.users[user_id].get_ranking_items(ranking_id)
     
-    def get_item_rank(self, item, rank_id:int=-1):
-        if rank_id == -1:
-            rank_id = self.current_ranking
-        ranking = self.user.get_ranking(rank_id)
+    def get_item_rank(self, user_id:str, ranking_id:str, item:rankings.RankItem):
+        ranking = self.users[user_id].get_ranking(ranking_id)
         return ranking.get_rank(item)
     
-    def get_item_rating(self, item, rank_id:int=-1):
-        if rank_id == -1:
-            rank_id = self.current_ranking
-        ranking = self.user.get_ranking(rank_id)
+    def get_item_rating(self, user_id:str, ranking_id:str, item:rankings.RankItem):
+        ranking = self.users[user_id].get_ranking(ranking_id)
         return ranking.get_rating(item)
     
-    def get_item_kvalue(self, item, rank_id:int=-1):
-        if rank_id == -1:
-            rank_id = self.current_ranking
-        ranking = self.user.get_ranking(rank_id)
+    def get_item_kvalue(self, user_id:str, ranking_id:str, item:rankings.RankItem):
+        ranking = self.users[user_id].get_ranking(ranking_id)
         return ranking.get_kvalue(item)
     
-    def get_item_comparisons(self, item, rank_id:int=-1):
-        if rank_id == -1:
-            rank_id = self.current_ranking
-        ranking = self.user.get_ranking(rank_id)
+    def get_item_comparisons(self, user_id:str, ranking_id:str, item:rankings.RankItem):
+        ranking = self.users[user_id].get_ranking(ranking_id)
         return ranking.get_comparisons(item)
 
-    def get_rankings_info(self) -> list[rankings.Ranking]:
-        rankings = self.user.get_rankings()
+    def get_rankings_info(self, user_id:str) -> list[rankings.Ranking]:
+        rankings = self.users[user_id].get_rankings()
         info = [self.get_ranking_info(ranking) for ranking in rankings]
         info.sort(key=lambda rank: rank[self.table_sorts['rankings']], reverse=self.sort_direction)
         return info
@@ -220,26 +211,28 @@ class Control:
         rank_dict['description'] = ranking.get_description()
         return rank_dict
     
-    def get_ranking_name(self):
-        return self.user.get_ranking_name(self.current_ranking)
+    def get_ranking_name(self, user_id:str, ranking_id:str) -> str:
+        return self.users[user_id].get_ranking_name(ranking_id)
     
-    def get_ranking_desc(self):
-        return self.user.get_ranking_desc(self.current_ranking)
+    def get_ranking_desc(self, user_id:str, ranking_id:str) -> str:
+        return self.users[user_id].get_ranking_desc(ranking_id)
     
-    def add_rank_result(self, result):
-        self.user.add_rank_result(self.current_items[0], self.current_items[1], result, self.current_ranking)
+    def add_rank_result(self, user_id:str, ranking_id:str, item1_id:str, item2_id:str, result:float) -> None:
+        item1 = self.id_to_item(item1_id)
+        item2 = self.id_to_item(item2_id)
+        self.users[user_id].add_rank_result(item1, item2, result, ranking_id)
 
-    def add_song_result(self, song_id:str, result:float):
-        self.user.add_song_result(self.current_ranking, self.song_tracker.song(song_id), result)
+    def add_item_result(self, user_id:str, ranking_id:str, item_id:str, result:float) -> None:
+        self.users[user_id].add_item_result(ranking_id, self.id_to_item(item_id), result)
 
     """
     Access libraries
     """
-    def get_library_names(self) -> list[str]:
-        return self.user.get_library_names()
+    def get_library_names(self, user_id:str) -> list[str]:
+        return self.users[user_id].get_library_names()
     
-    def get_libraries_info(self) -> list[dict[str,Any]]:
-        libraries = self.user.get_libraries()
+    def get_libraries_info(self, user_id:str) -> list[dict[str,Any]]:
+        libraries = self.users[user_id].get_libraries()
         info = [self.get_library_info(library) for library in libraries]
         info.sort(key=lambda lib: lib[self.table_sorts['libraries']], reverse=self.sort_direction)
         return info
@@ -268,23 +261,26 @@ class Control:
     """
     Access/ use the database
     """
-    def load_to_db(self):
+    def id_to_item(self, item:str) -> rankings.RankItem:
+        return self.song_tracker.song(item)
+
+    def load_to_db(self, user_id:str):
         pass
 
-    def load_from_db(self):
+    def load_from_db(self, user_id:str):
         pass
 
     """
     Access/ use files
     """
-    def load_to_file(self):
-        with open(f'static/data/pickle/{self.user.name}.pckl','wb') as f:
-            pickle.dump((self.user,rankings.Ranking.id_num),f)
+    def load_to_file(self, user_id:str):
+        with open(f'static/data/pickle/{user_id}.pckl','wb') as f:
+            pickle.dump((self.users[user_id],rankings.Ranking.id_num),f)
         with open(f'static/data/pickle/song_tracker.pckl', 'wb') as f:
             pickle.dump(self.song_tracker,f)
 
-    def load_from_file(self):
-        with open(f'static/data/pickle/{self.current_user_name}.pckl','rb') as f:
-            self.user,rankings.Ranking.id_num = pickle.load(f)
+    def load_from_file(self, user_id:str):
+        with open(f'static/data/pickle/{user_id}.pckl','rb') as f:
+            self.users[user_id],rankings.Ranking.id_num = pickle.load(f)
         with open(f'static/data/pickle/song_tracker.pckl', 'rb') as f:
             self.song_tracker = pickle.load(f)

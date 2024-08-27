@@ -4,8 +4,9 @@ import song_collections
 
 class Profile:
     
-    def __init__(self, name:str):
+    def __init__(self, name:str, id:str):
         self.name = name
+        self.id = id
         self.libraries = dict[str,song_collections.Library]()
         self.playlists = dict[str,song_collections.Playlist]()
         self.rankings = dict[str,rankings.Ranking]()
@@ -40,12 +41,12 @@ class Profile:
     def add_rank_result(self, item1:rankings.RankItem, item2:rankings.RankItem, result:float, rank_id:str):
         self.rankings[rank_id].add_result(item1, item2, result)
 
-    def add_song_result(self, rank_id:str, item:rankings.RankItem, amount:float):
+    def add_item_result(self, rank_id:str, item:rankings.RankItem, amount:float):
         ranking = self.rankings[rank_id]
         if isinstance(ranking, rankings.InexactRanking):
             ranking.adjust_rating(item, amount)
 
-    """
+    
     def get_ranking_items(self, rank_id:str) -> list[dict]:
         items = []
         for i,item in enumerate(self.rankings[rank_id].get_items()):
@@ -60,7 +61,7 @@ class Profile:
     """
     def get_ranking_items(self, rank_id:str) -> list:
         return list(self.rankings[rank_id].get_items())
-    
+    """
     def get_ranking(self, rank_id:str) -> rankings.Ranking:
         return self.rankings[rank_id]
     

@@ -4,11 +4,11 @@
 <title> Initialize </title>
 {% endblock %}
 
-{% set screens = [{'url':'ranking_hub','name':'Hub'}] %}
+{% set screens = [{'url':url_for('ranking_hub',user_id=user_id),'name':'Hub'}] %}
 
 {% block body %}
 <h1> Ranking songs from playlist {{ playlist['name'] }} </h1> <br>
-<form action="initializer" method="post">
+<form action="/initializer/{{user_id}}" method="post">
     <label for="list_name"> Name </label>                   <br>
     <input type="text" id="list_name" name="list_name">     <br>
     <label for="description"> Description </label>          <br>

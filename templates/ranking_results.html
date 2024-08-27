@@ -4,7 +4,7 @@
 <title> Rankings </title>
 {% endblock %}
 
-{% set screens = [{'url':'ranking_hub','name':'Hub'}, {'url':'active_ranking','name':'Rank Songs'}] %}
+{% set screens = [{'url':url_for('ranking_hub',user_id=user_id),'name':'Hub'}, {'url':url_for('active_ranking0',user_id=user_id,ranking_id=ranking_id),'name':'Rank Songs'}] %}
 
 {% block body %}
 <section class="header">
@@ -29,7 +29,7 @@
                 {% for header in headers %}
                     <td> {{ item[header] }} </td>
                 {% endfor %}
-                <td> <button onclick="changeRating(`{{item['id']}}`,1)" class="increase" name="increase"> + </button> <button onclick="changeRating(`{{item['id']}}`,-1)" class="decrease" name="decrease"> - </button> </td>
+                <td> <button onclick="changeRating(`{{user_id}}`,`{{ranking_id}}`,`{{item['id']}}`,0.5)" class="increase" name="increase"> + </button> <button onclick="changeRating(`{{user_id}}`,`{{ranking_id}}`,`{{item['id']}}`,-0.5)" class="decrease" name="decrease"> - </button> </td>
             </tr>
         {% endfor %}
     </table>

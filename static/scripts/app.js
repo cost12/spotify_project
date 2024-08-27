@@ -31,29 +31,18 @@ function changeToLibrary(library_name) {
     });
 }
 
-function changeToRanking(rank_id) {
-    $.ajax({ 
-        url: '/change_ranking',
-        type: 'POST',
-        contentType: 'application/json', 
-        data: JSON.stringify({ 'id': rank_id }), 
-        success: function(response) { 
-            document.location.href = 'ranking_results'
-        },
-        error: function(error) { 
-            console.log(error); 
-        } 
-    });
+function changeToRanking(user_id, rank_id) {
+    document.location.href = '/ranking_results/'+user_id+'/'+rank_id
 }
 
-function changeRating(song_id, amount) {
+function changeRating(user_id, ranking_id, song_id, amount) {
     $.ajax({ 
         url: '/update_ranking',
         type: 'POST',
         contentType: 'application/json', 
-        data: JSON.stringify({ 'id': song_id, 'amount': amount }), 
+        data: JSON.stringify({ 'user_id': user_id, 'ranking_id': ranking_id, 'id': song_id, 'amount': amount }), 
         success: function(response) {
-            document.location.href = 'ranking_results'
+            location.reload();
         },
         error: function(error) { 
             console.log(error); 

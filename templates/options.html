@@ -7,9 +7,9 @@
 {% set screens = [{'url':url_for('ranking_hub',user_id=user_id), 'name':'Ranking Hub'}, {'url':url_for('get_playlists', user_id=user_id),'name':'Choose Playlist'}] %}
 
 {% block body %}
-<p> Click <a onclick="loading()" href="/get_playlists/{{user_id}}"> here </a> to pick a base playlist to work from. </p>
-<p> Click <a href="/ranking_hub/{{user_id}}"> here </a> to go to rankings</p>
+<p> Click <a onclick="loading()" href="{{ url_for('get_playlists',user_id=user_id) }}"> here </a> to pick a base playlist to work from. </p>
+<p> Click <a href="{{ url_for('ranking_hub',user_id=user_id) }}"> here </a> to go to rankings</p>
 <!-- <p> Click <a onclick="loading()" href="/load_data"> here </a> to load from the database. </p> -->
-<p> Click <a onclick="loading()" href="/load_file/{{user_id}}"> here </a> to load from a file. </p>
-<p> Click <a onclick="loading()" href="/store_file/{{user_id}}"> here </a> to load to a file. </p>
+<p> Click <a onclick="loading()" href="{{ url_for('load_file',user_id=user_id) }}"> here </a> to load from a file. </p>
+<p> Click <a onclick="loading()" href="{{ url_for('store_file',user_id=user_id) }}"> here </a> to load to a file. </p>
 {% endblock %}

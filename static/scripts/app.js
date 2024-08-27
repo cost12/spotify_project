@@ -32,7 +32,7 @@ function changeToLibrary(library_name) {
 }
 
 function changeToRanking(user_id, rank_id) {
-    document.location.href = '/ranking_results/'+user_id+'/'+rank_id
+    document.location.href = '/'+user_id+'/ranking_results'+'/'+rank_id
 }
 
 function changeRating(user_id, ranking_id, song_id, amount) {

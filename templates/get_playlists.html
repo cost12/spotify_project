@@ -7,7 +7,7 @@
 {% set screens = [{'url':url_for('options',user_id=user_id),'name':'Options'}] %}
 
 {% block body %}
-<form action="/get_songs/{{user_id}}" method="post">
+<form action="{{ url_for('get_songs',user_id=user_id) }}" method="post">
     <input type="submit" name="submit" onclick="loading()">
     <table>
         <tr>

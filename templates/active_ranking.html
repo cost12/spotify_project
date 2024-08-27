@@ -14,7 +14,7 @@
     </div>
 </section>
 
-<form class="chooser" action="/ranking_answer/{{user_id}}/{{ranking_id}}/{{item1_info['id']}}/{{item2_info['id']}}" method="post">
+<form class="chooser" action="{{ url_for('ranking_answer',user_id=user_id,ranking_id=ranking_id,item1_id=item1_info['id'],item2_id=item2_info['id']) }}" method="post">
     <div class="item" id="item1">
         <div class="item-view">
             <h2> <a href="{{item1_info['link']}}"> {{ item1_info["name"] }} </a> </h2>

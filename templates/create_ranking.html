@@ -8,7 +8,7 @@
 
 {% block body %}
 <h1> Ranking songs from playlist {{ playlist['name'] }} </h1> <br>
-<form action="/initializer/{{user_id}}" method="post">
+<form action="{{url_for('initializer',user_id=user_id)}}" method="post">
     <label for="list_name"> Name </label>                   <br>
     <input type="text" id="list_name" name="list_name">     <br>
     <label for="description"> Description </label>          <br>

@@ -28,7 +28,7 @@
                     <i class="fa fa-play" onclick="playElm('song1-preview')"></i>
                     <i class="fa fa-pause" onclick="pauseElm('song1-preview')"></i>
                     <p> Rank: {{ item1_info["rank"] }} <br> 
-                        Rating: {{ item1_info["rating"]|round(3) }} <br>
+                        Rating: {{ item1_info["rating"] }} <br>
                         Probability: {{ expected_outcome|round(3) }} <br>
                         k: {{ item1_info["k value"] }} <br> 
                         Comparisons: {{ item1_info["comparisons"] }} </p>
@@ -53,7 +53,7 @@
                     <i class="fa fa-play" onclick="playElm('song2-preview')"></i>
                     <i class="fa fa-pause" onclick="pauseElm('song2-preview')"></i>
                     <p> Rank: {{ item2_info["rank"] }} <br> 
-                        Rating: {{ item2_info["rating"]|round(3) }} <br>
+                        Rating: {{ item2_info["rating"] }} <br>
                         Probability: {{ (1-expected_outcome)|round(3) }} <br>
                         k: {{ item2_info["k value"] }} <br> 
                         Comparisons: {{ item2_info["comparisons"] }} </p>

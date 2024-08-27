@@ -1,6 +1,7 @@
 import spotipy
 import pickle
 from typing import Any
+import dominate.tags as tags
 
 import utils
 import song_nodb as song_db
@@ -9,6 +10,7 @@ import song_collections
 import rankings
 from song_db import SONG_PROPERTIES
 import spotify_secrets
+import tables
 #import simple_db
 
 class Control:
@@ -20,9 +22,40 @@ class Control:
         self.__spotipy_connect(flask_session)
         self.users = dict[str,personal_profile.Profile]()
         self.song_tracker = song_db.SongTracker()
-        self.current_items = []
-        self.table_sorts = {'libraries':'name','rankings':'id','ranking':'rating'}
-        self.sort_direction = False
+        self.tables = self.__create_tables()
+        self.table_sources = {'libraries':lambda user_id, _: self.users[user_id].get_libraries(),'rankings':lambda user_id, _: self.users[user_id].get_rankings(),'ranking':lambda user_id, ranking_id: self.users[user_id].get_ranking_items(ranking_id)}
+
+    def __create_tables(self) -> dict[str,tables.Table]:
+        libraries_table = tables.create_table(
+            'libraries',
+            ['Name','Songs','Artists','Albums','Length','Average'],
+            lambda _, __, lib: self.get_library_info(lib),
+            right_aligned=['Songs','Artists','Albums','Length','Average'],
+            column_sorts=True,
+            column_functions={'Name':lambda user_id, name: f'changeToLibrary("{user_id}","{name}")'},
+            sort_functions={'Length':lambda x: utils.str_to_ms(x),'Average':lambda x: utils.str_to_ms(x)}
+        )
+        
+        rankings_table = tables.create_table(
+            'rankings',
+            ['ID','Name','Library','Songs','Comparisons','Description'],
+            lambda _, __, rank: self.get_ranking_info(rank),
+            right_aligned=['Songs','ID','Comparisons'],
+            column_sorts=True,
+            column_functions={'ID':lambda user_id, ranking_id: f'changeToRanking("{user_id}","{ranking_id}")'}
+        )                                     
+        
+        ranking_table = tables.create_table(
+            'ranking',
+            ['Rank','Song','Artist','Album','Score','Actions'],
+            lambda user_id, ranking_id, item: self.get_item_info(user_id, ranking_id, item),
+            right_aligned=['Score','Rank'],
+            column_sorts=True,
+            column_functions={'Song':lambda user_id, song: f'changeToSong("{user_id}","{song}")','Artist':lambda user_id, artist: f'changeToSong("{user_id}",{artist}")','Album':lambda user_id, album: f'changeToSong("{user_id}","{album}")'},
+            sort_functions={'Score':lambda x: float(x)},
+        )
+        
+        return {'libraries':libraries_table,'rankings':rankings_table,'ranking':ranking_table}
 
     def create_profile(self, user_id:str, user_name:str) -> None:
         if user_id not in self.users:
@@ -58,7 +91,7 @@ class Control:
 
         self.sp = spotipy.Spotify(auth_manager=self.sp_oauth)
 
-    def get_playlists(self, user_id) -> list[dict]:
+    def get_playlists(self, user_id:str) -> list[dict]:
         playlists_info = self.sp.user_playlists(user_id)
         playlists = playlists_info['items']
 
@@ -104,7 +137,7 @@ class Control:
         if self.users[user_id].has_spotify_ranking(term):
             i = 0
             user_ranking = list[song_db.Song]()
-            spotify_ranking = self.user.get_spotify_ranking(term)
+            spotify_ranking = self.users[user_id].get_spotify_ranking(term)
             while len(user_ranking) < library.size() and i < len(spotify_ranking):
                 song = spotify_ranking[i]
                 if song in library:
@@ -162,6 +195,21 @@ class Control:
         return self.users[user_id].get_ranking(ranking_id).expected_outcome(self.id_to_item(item1_id),self.id_to_item(item2_id))
 
     def get_item_info(self, user_id:str, ranking_id:str, item:rankings.RankItem) -> dict[str,str]:
+        actions = tags.div()
+        with actions:
+            tags.button('+', onclick=f"changeRating(`{user_id}`,`{ranking_id}`,`{item.id}`,0.5)",_class='increase', name='increase')
+            tags.button('-', onclick=f"changeRating(`{user_id}`,`{ranking_id}`,`{item.id}`,-0.5)",_class='decrease', name='decrease')
+        item_info = {
+            'Rank': self.get_item_rank(user_id, ranking_id, item),
+            'Song': item.name,
+            'Artist': item.artist_str(),
+            'Album': item.get_album().name,
+            'Score': str(f'{round(self.get_item_rating(user_id, ranking_id, item),3):.3f}'),
+            'Actions': actions
+        }
+        return item_info
+
+    def get_item_info_post(self, user_id:str, ranking_id:str, item:rankings.RankItem) -> dict[str,str]:
         item_info = {
             "name":   item.name,
             'id':     item.id,
@@ -170,7 +218,7 @@ class Control:
             'preview':item.preview_url,
             "artist": item.artist_str(),
             "rank":   self.get_item_rank(user_id, ranking_id, item),
-            "rating": self.get_item_rating(user_id, ranking_id, item),
+            "rating": str(f'{round(self.get_item_rating(user_id, ranking_id, item),3):.3f}'),
             "k value": self.get_item_kvalue(user_id, ranking_id, item),
             "comparisons": self.get_item_comparisons(user_id, ranking_id, item)
         }
@@ -195,20 +243,22 @@ class Control:
         ranking = self.users[user_id].get_ranking(ranking_id)
         return ranking.get_comparisons(item)
 
+    """
     def get_rankings_info(self, user_id:str) -> list[rankings.Ranking]:
         rankings = self.users[user_id].get_rankings()
         info = [self.get_ranking_info(ranking) for ranking in rankings]
         info.sort(key=lambda rank: rank[self.table_sorts['rankings']], reverse=self.sort_direction)
         return info
+    """
     
     def get_ranking_info(self, ranking:rankings.Ranking) -> dict[str,Any]:
         rank_dict = {}
-        rank_dict['id'] = ranking.id
-        rank_dict['name'] = ranking.get_name()
-        rank_dict['library'] = ranking.library_name()
-        rank_dict['num_songs'] = ranking.size()
-        rank_dict['num_comparisons'] = ranking.num_comparisons()
-        rank_dict['description'] = ranking.get_description()
+        rank_dict['ID'] = ranking.id
+        rank_dict['Name'] = ranking.get_name()
+        rank_dict['Library'] = ranking.library_name()
+        rank_dict['Songs'] = ranking.size()
+        rank_dict['Comparisons'] = ranking.num_comparisons()
+        rank_dict['Description'] = ranking.get_description()
         return rank_dict
     
     def get_ranking_name(self, user_id:str, ranking_id:str) -> str:
@@ -225,38 +275,36 @@ class Control:
     def add_item_result(self, user_id:str, ranking_id:str, item_id:str, result:float) -> None:
         self.users[user_id].add_item_result(ranking_id, self.id_to_item(item_id), result)
 
+
     """
     Access libraries
     """
     def get_library_names(self, user_id:str) -> list[str]:
         return self.users[user_id].get_library_names()
     
+    """
     def get_libraries_info(self, user_id:str) -> list[dict[str,Any]]:
         libraries = self.users[user_id].get_libraries()
         info = [self.get_library_info(library) for library in libraries]
         info.sort(key=lambda lib: lib[self.table_sorts['libraries']], reverse=self.sort_direction)
         return info
+    """
 
     def get_library_info(self, library:song_collections.Library) -> dict[str,Any]:
         lib_dict = {}
-        lib_dict['name'] = library.name()
-        lib_dict['songs'] = library.size()
-        lib_dict['albums'] = library.num_albums()
-        lib_dict['artists'] = library.num_artist()
-        lib_dict['average'] = utils.ms_to_str(library.length()//library.size())
+        lib_dict['Name'] = library.name()
+        lib_dict['Songs'] = library.size()
+        lib_dict['Albums'] = library.num_albums()
+        lib_dict['Artists'] = library.num_artist()
+        lib_dict['Length'] = utils.ms_to_str(library.length())
+        lib_dict['Average'] = utils.ms_to_str(library.length()//library.size())
         return lib_dict
     
     """
     Tables!
     """
-    def set_table_sort(self, table:str, sort:str) -> None:
-        if sort == self.table_sorts[table]:
-            self.sort_direction = not self.sort_direction
-        else:
-            self.table_sorts[table] = sort
-
-    def get_table_sort(self, table:str) -> str:
-        return self.table_sorts[table]
+    def get_table_html(self, table:str, user_id:str, ranking_id:str='', sort_column:str='', reverse:bool=False) -> str:
+        return self.tables[table].to_html(self.table_sources[table](user_id, ranking_id),sort_column, reverse, user_id=user_id, ranking_id=ranking_id)
 
     """
     Access/ use the database

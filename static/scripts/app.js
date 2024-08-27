@@ -18,21 +18,12 @@ function newSelection(element, hide, val) {
     }
 }
 
-function changeToLibrary(library_name) {
-    $.ajax({ 
-        url: '/change_library',
-        type: 'POST',
-        contentType: 'application/json', 
-        data: JSON.stringify({ 'name': library_name }), 
-        success: function(response) {},
-        error: function(error) { 
-            console.log(error); 
-        }
-    });
+function changeToLibrary(user_id, library_name) {
+    document.location.href = '/'+user_id+'/library/'+library_name
 }
 
 function changeToRanking(user_id, rank_id) {
-    document.location.href = '/'+user_id+'/ranking_results'+'/'+rank_id
+    document.location.href = '/'+user_id+'/ranking_results/'+rank_id
 }
 
 function changeRating(user_id, ranking_id, song_id, amount) {
@@ -56,32 +47,33 @@ function loading() {
 }
 
 function sortTable(table,sort) {
-    $.ajax({ 
-        url: '/update_table_sort',
+    let queryParams = new URLSearchParams(window.location.search);
+    let table_sort = table+'_sort';
+    let table_reverse = table+'_reverse';
+    let reverse = false;
+    if (queryParams.get(table_sort) === sort) {
+        if (queryParams.get(table_reverse) === 'false') {
+            reverse = 'true';
+        } else {
+            reverse = 'false';
+        }
+    }
+    queryParams.set(table_sort, sort);
+    queryParams.set(table_reverse, reverse);
+    document.location.href = window.location.origin + window.location.pathname + '?' + queryParams
+    /*
+    let data = {}
+    data[table] = sort
+    $.ajax({
+        url: document.URL,
         type: 'POST',
         contentType: 'application/json',
-        data: JSON.stringify({ 'table': table, 'sort': sort }), 
+        data: JSON.stringify(data), 
         success: function(response) {
-            document.location.href = 'ranking_hub'
+            location.reload();
         },
         error: function(error) { 
             console.log(error); 
         } 
-    }); 
+    });*/
 }
-
-function sendData() {
-    let value = document.getElementById('input').value; 
-    $.ajax({ 
-        url: '/process', 
-        type: 'POST', 
-        contentType: 'application/json', 
-        data: JSON.stringify({ 'value': value }), 
-        success: function(response) { 
-            document.getElementById('output').innerHTML = response.result; 
-        }, 
-        error: function(error) { 
-            console.log(error); 
-        } 
-    }); 
-} 

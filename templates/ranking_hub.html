@@ -16,6 +16,8 @@
 <div class="libraries">
     <div class="container">
         <h3> There are {{ num_libraries }} libraries to rank </h3>
+        {{ libraries|safe }}
+        <!--
         <table>
             <tr>
                 <th onclick="sortTable('libraries','name')"> Name </th>
@@ -34,12 +36,15 @@
                 </tr>
             {% endfor %}
         </table>
+        -->
     </div>
 </div>
 
 <div class="rankings">
     <div class="container">
         <h3> There are {{ num_rankings }} rankings currently. </h3>
+        {{ rankings|safe }}
+        <!--
         <table>
             <tr>
                 <th onclick="sortTable('rankings','id')"> ID </th>
@@ -60,6 +65,7 @@
                 </tr>
             {% endfor %}
         </table>
+        -->
     </div>
 </div>
 {% endblock %}

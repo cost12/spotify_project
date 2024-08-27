@@ -39,6 +39,7 @@ def options(user_id:str):
     valid, url = control.validate_session()
     if not valid:
         return flask.redirect(url)
+    
     return flask.render_template('options.html', user_id=user_id)
 
 @app.route('/<user_id>/load_data')
@@ -75,7 +76,6 @@ def get_playlists(user_id:str):
         return flask.redirect(url)
     
     playlists = control.get_playlists(user_id)
-
     return flask.render_template('get_playlists.html',playlists=playlists,user_id=user_id)
 
 @app.route('/<user_id>/get_songs', methods=['GET','POST'])
@@ -134,8 +134,8 @@ def active_ranking1(user_id:str, ranking_id:str, item1_id:str, item2_id:str):
         return flask.redirect(url)
     
     list_name = control.get_ranking_name(user_id, ranking_id)
-    item1_info = control.get_item_info(user_id, ranking_id, control.id_to_item(item1_id))
-    item2_info = control.get_item_info(user_id, ranking_id, control.id_to_item(item2_id))
+    item1_info = control.get_item_info_post(user_id, ranking_id, control.id_to_item(item1_id))
+    item2_info = control.get_item_info_post(user_id, ranking_id, control.id_to_item(item2_id))
     expected_outcome = control.get_expected_outcome(user_id, ranking_id, item1_id,item2_id)
     return flask.render_template('active_ranking.html',user_id=user_id,ranking_id=ranking_id,list_name=list_name, item1_info=item1_info, item2_info=item2_info, expected_outcome=expected_outcome)
 
@@ -165,31 +165,37 @@ def ranking_results(user_id:str, ranking_id:str):
     if not valid:
         return flask.redirect(url)
     
-    headers = control.users[user_id].get_headers()
-    items = control.get_ranking_items(user_id, ranking_id)
+    sort_column = 'Rank'
+    reverse = True
+    data = flask.request.args
+    if 'ranking_sort' in data:
+        sort_column = data['ranking_sort']
+        reverse = data['ranking_reverse'] == 'true'
+    table = control.get_table_html('ranking',user_id=user_id, ranking_id=ranking_id, sort_column=sort_column, reverse=reverse)
     ranking_name = control.get_ranking_name(user_id,ranking_id)
     ranking_desc = control.get_ranking_desc(user_id,ranking_id)
-    return flask.render_template('ranking_results.html', user_id=user_id, ranking_id=ranking_id, headers=headers, items=items, ranking_name=ranking_name, ranking_desc=ranking_desc)
+    return flask.render_template('ranking_results.html', user_id=user_id, ranking_id=ranking_id, table=table, ranking_name=ranking_name, ranking_desc=ranking_desc)
 
-@app.route('/<user_id>/ranking_hub')
+@app.route('/<user_id>/ranking_hub', methods=['GET','POST'])
 def ranking_hub(user_id:str):
     valid, url = control.validate_session()
     if not valid:
         return flask.redirect(url)
     
-    rankings = control.get_rankings_info(user_id)
-    libraries = control.get_libraries_info(user_id)
+    rankings_sort = 'ID'
+    rankings_reverse = False
+    libraries_sort = 'Name'
+    libraries_reverse = False
+    data = flask.request.args
+    if 'rankings_sort' in data:
+        rankings_sort = data['rankings_sort']
+        rankings_reverse = data['rankings_reverse'] == 'true'
+    if 'libraries_sort' in data:
+        libraries_sort = data['libraries_sort']
+        libraries_reverse = data['libraries_reverse'] == 'true'
+    rankings = control.get_table_html('rankings',user_id,sort_column=rankings_sort,reverse=rankings_reverse)
+    libraries = control.get_table_html('libraries',user_id,sort_column=libraries_sort,reverse=libraries_reverse)
     return flask.render_template('ranking_hub.html',user_id=user_id,num_libraries=len(libraries),libraries=libraries,rankings=rankings,num_rankings=len(rankings))
-
-@app.route('/update_table_sort', methods=['GET','POST'])
-def table_sort():
-    valid, url = control.validate_session()
-    if not valid:
-        return flask.redirect(url)
-    
-    data = flask.request.get_json()
-    control.set_table_sort(data['table'],data['sort'])
-    return flask.redirect('ranking_hub')
 
 @app.route('/logout')
 def logout():
